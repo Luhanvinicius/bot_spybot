@@ -65,6 +65,15 @@ const init = async () => {
             coords TEXT,
             last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
+
+        await run(`CREATE TABLE IF NOT EXISTS active_wars (
+            id SERIAL PRIMARY KEY,
+            alliance_name VARCHAR(255) UNIQUE NOT NULL,
+            opponent_name VARCHAR(255) NOT NULL,
+            start_points_alliance BIGINT,
+            start_points_opponent BIGINT,
+            start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
         console.log('✅ PostgreSQL Database Initialized');
     } catch (error) {
         console.error('❌ Error initializing database:', error);
@@ -115,6 +124,19 @@ const db = {
 
     async deletePlayerCoords(player) {
         return run('DELETE FROM player_coords WHERE player_name = $1', [player]);
+    },
+
+    async addActiveWar(alliance, opponent, startPointsAlliance, startPointsOpponent) {
+        return run('INSERT INTO active_wars (alliance_name, opponent_name, start_points_alliance, start_points_opponent) VALUES ($1, $2, $3, $4) ON CONFLICT (alliance_name) DO UPDATE SET start_points_alliance = $3, start_points_opponent = $4, opponent_name = $2, start_date = CURRENT_TIMESTAMP', [alliance, opponent, startPointsAlliance, startPointsOpponent]);
+    },
+
+    async getActiveWar(alliance) {
+        const rows = await query('SELECT * FROM active_wars WHERE alliance_name = $1', [alliance]);
+        return rows.length ? rows[0] : null;
+    },
+
+    async removeActiveWar(alliance) {
+        return run('DELETE FROM active_wars WHERE alliance_name = $1', [alliance]);
     }
 };
 

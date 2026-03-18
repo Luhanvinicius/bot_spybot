@@ -30,9 +30,48 @@ module.exports = {
                 { name: '🥊 Rival ID', value: `${alliance.OpponentAllianceId}`, inline: false }
             );
 
-        // If the API provides more details when in war (like Points), we add them here
-        if (alliance.WarPoints) {
-            embed.addFields({ name: '📈 War Points actuales', value: `${alliance.WarPoints.toLocaleString()}`, inline: true });
+        // Fetch active war points from DB
+        const db = require('../database/db');
+        const activeWar = await db.getActiveWar(alliance.Id);
+        
+        if (activeWar) {
+            const startAlliancePoints = activeWar.start_points_alliance || 0;
+            const currentAlliancePoints = alliance.WarPoints || 0;
+            const alliancePointsGained = Math.max(0, currentAlliancePoints - startAlliancePoints);
+        
+            let opponentPointsGained = 0;
+            let opponentNameStr = alliance.OpponentAllianceId || activeWar.opponent_name;
+            
+            if (opponentNameStr && opponentNameStr !== 'Unknown') {
+                const opponent = await api.getAlliance(opponentNameStr);
+                if (opponent) {
+                    const startOpponentPoints = activeWar.start_points_opponent || 0;
+                    const currentOpponentPoints = opponent.WarPoints || 0;
+                    opponentPointsGained = Math.max(0, currentOpponentPoints - startOpponentPoints);
+                    opponentNameStr = opponent.Name; // Use nicer name
+                }
+            }
+        
+            // Calculate time left (7 days duration)
+            const startDate = new Date(activeWar.start_date);
+            const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const now = new Date();
+            const timeLeftMs = Math.max(0, endDate - now);
+            
+            const days = Math.floor(timeLeftMs / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeLeftMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
+        
+            embed.setDescription(`**${alliance.Name}** vs **${opponentNameStr}**`)
+            embed.addFields(
+                { name: 'Puntos ganados:', value: `**${alliance.Name}**: ${alliancePointsGained.toLocaleString()}\n**${opponentNameStr}**: ${opponentPointsGained.toLocaleString()}`, inline: false },
+                { name: 'Tiempo restante:', value: `${days}d ${hours}h ${minutes}m`, inline: false }
+            );
+        } else {
+            // Fallback if not tracked yet
+            if (alliance.WarPoints) {
+                embed.addFields({ name: '📈 War Points actuales', value: `${alliance.WarPoints.toLocaleString()}`, inline: true });
+            }
         }
 
         await interaction.editReply({ embeds: [embed] });

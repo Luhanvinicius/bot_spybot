@@ -23,18 +23,24 @@ class Monitor {
                 if (!alliance) continue;
 
                 const inWar = alliance.InWar;
-                const prevState = this.previousStates.get(shield.name);
+                const activeWar = await db.getActiveWar(alliance.Id);
 
-                if (inWar && (!prevState || !prevState.war)) {
-                    // Start of war detected
+                if (inWar && !activeWar) {
+                    // NEW WAR detected
+                    let opponentPoints = 0;
+                    if (alliance.OpponentAllianceId) {
+                        const opponent = await api.getAlliance(alliance.OpponentAllianceId);
+                        if (opponent) opponentPoints = opponent.WarPoints || 0;
+                    }
+                    
+                    await db.addActiveWar(alliance.Id, alliance.OpponentAllianceId || 'Unknown', alliance.WarPoints || 0, opponentPoints);
                     this.notifyWarStart(shield.name, alliance);
-                } else if (!inWar && prevState && prevState.war) {
-                    // End of war detected
-                    this.notifyWarEnd(shield.name, prevState.alliance);
+                } else if (!inWar && activeWar) {
+                    // War ended
+                    this.notifyWarEnd(shield.name, activeWar, alliance);
+                    await db.removeActiveWar(alliance.Id);
                 }
 
-                // Update state
-                this.updateState(shield.name, { war: inWar, alliance: alliance });
             }
         }, this.config.updateIntervals.war);
     }
@@ -89,22 +95,36 @@ class Monitor {
         channel.send({ embeds: [embed] });
     }
 
-    async notifyWarEnd(allianceName, lastAlliance) {
+    async notifyWarEnd(allianceName, activeWar, currentAlliance) {
         const channel = await this.getChannel('warHistory');
+        
+        // Calculate points gained during the war
+        const currentAlliancePoints = currentAlliance.WarPoints || 0;
+        const startAlliancePoints = activeWar.start_points_alliance || 0;
+        const alliancePointsGained = Math.max(0, currentAlliancePoints - startAlliancePoints);
+        
+        let opponentPointsGained = 0;
+        if (activeWar.opponent_name && activeWar.opponent_name !== 'Unknown') {
+            const opponent = await api.getAlliance(activeWar.opponent_name);
+            if (opponent) {
+                const currentOpponentPoints = opponent.WarPoints || 0;
+                const startOpponentPoints = activeWar.start_points_opponent || 0;
+                opponentPointsGained = Math.max(0, currentOpponentPoints - startOpponentPoints);
+            }
+        }
+
+        const result = alliancePointsGained > opponentPointsGained ? 'Win' : 'Loss';
+        await db.addWarHistory(allianceName, activeWar.opponent_name, alliancePointsGained, opponentPointsGained, activeWar.start_date, new Date(), result);
+
         if (!channel) return;
 
-        // Note: result logic might need better points tracking during war
-        const result = 'Finalizada'; 
-        
-        await db.addWarHistory(allianceName, lastAlliance.OpponentAllianceId, lastAlliance.WarPoints, 0, new Date(), new Date(), 'Win');
-
         const embed = new EmbedBuilder()
-            .setTitle(`🏁 Guerra Finalizada`)
+            .setTitle(`🏁 Guerra Finalizada: ${result === 'Win' ? 'VICTORIA' : 'DERROTA'}`)
             .setColor(result === 'Win' ? '#00ff00' : '#ff0000')
             .addFields(
                 { name: 'Alianza', value: allianceName, inline: true },
-                { name: 'Rival', value: lastWar.opponentName, inline: true },
-                { name: 'Resultado', value: `${lastWar.points} - ${lastWar.opponentPoints}`, inline: false }
+                { name: 'Rival', value: activeWar.opponent_name, inline: true },
+                { name: 'Resultado (Puntos ganados)', value: `${alliancePointsGained} vs ${opponentPointsGained}`, inline: false }
             )
             .setTimestamp();
 
