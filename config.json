@@ -1,0 +1,18 @@
+{
+  "token": "YOUR_DISCORD_TOKEN",
+  "api": "https://api.galaxylifegame.net",
+  "name": "Spy Bot",
+  "updateIntervals": {
+    "war": 10000,
+    "points": 60000,
+    "image": 15000
+  },
+  "channels": {
+    "warStatus": "CHANNEL_ID",
+    "warLive": "CHANNEL_ID",
+    "warHistory": "CHANNEL_ID",
+    "opponent": "CHANNEL_ID",
+    "wpGained": "CHANNEL_ID",
+    "logs": "CHANNEL_ID"
+  }
+}
