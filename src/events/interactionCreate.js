@@ -5,10 +5,12 @@ module.exports = {
     async execute(interaction) {
         if (!interaction.isChatInputCommand()) return;
 
-        // Restriction: Only respond in specific channel ID
-        if (interaction.channelId !== '1481853111520985101') {
+        const allowedChannels = ['1481853111520985101', '1483714865863593984'];
+
+        // Restriction: Only respond in specific channel IDs
+        if (!allowedChannels.includes(interaction.channelId)) {
             return interaction.reply({ 
-                content: '❌ Este bot solo se puede usar en el canal autorizado.', 
+                content: '❌ Este bot solo se puede usar en los canales autorizados.', 
                 ephemeral: true 
             });
         }
