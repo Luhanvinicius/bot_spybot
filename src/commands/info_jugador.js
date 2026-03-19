@@ -46,12 +46,23 @@ module.exports = {
             );
 
         if (stats) {
+            const playTimeHours = Math.floor((stats.TotalPlayTimeInMs || 0) / (1000 * 60 * 60));
             embed.addFields(
-                { name: '⚔️ Victorias ataque', value: `${stats.attacksWon || 0}`, inline: true },
-                { name: '🛡️ Defensas ganadas', value: `${stats.defensesWon || 0}`, inline: true },
-                { name: '🏆 XP', value: `${(userBasic.Experience || 0).toLocaleString()}`, inline: true }
+                { name: '⚔️ Ataques Realizados', value: `${stats.PlayersAttacked || 0}`, inline: true },
+                { name: '🛡️ Veces Atacado', value: `${stats.TimesAttacked || 0}`, inline: true },
+                { name: '⏳ Tiempo Jugado', value: `${playTimeHours} horas`, inline: true },
+                
+                { name: '💰 Monedas Robadas', value: `${(stats.CoinsFromAttacks || 0).toLocaleString()}`, inline: true },
+                { name: '💎 Minerales Robados', value: `${(stats.MineralsFromAttacks || 0).toLocaleString()}`, inline: true },
+                { name: '💣 Starbases Destruidas', value: `${stats.StarbasesDestroyed || 0}`, inline: true },
+
+                { name: '🪖 Tropas Entrenadas', value: `${(stats.TroopsTrained || 0).toLocaleString()}`, inline: true },
+                { name: '🤝 Tropas Donadas', value: `${(stats.TroopSizesDonated || 0).toLocaleString()}`, inline: true },
+                { name: '🏆 Rivales Ganados', value: `${stats.RivalsWon || 0}`, inline: true }
             );
         }
+
+        embed.addFields({ name: '🌟 Nivel de XP', value: `${(userBasic.Experience || 0).toLocaleString()} XP`, inline: false });
 
         if (userBasic.AllianceId) {
             embed.addFields({ name: '🏰 Alianza ID', value: userBasic.AllianceId, inline: false });
