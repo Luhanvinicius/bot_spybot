@@ -24,16 +24,17 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
         console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
         let data;
+        
+        console.log('Deploying globally (can take até 1 hora para sincronizar em todos os servidores)...');
+        data = await rest.put(
+            Routes.applicationCommands(process.env.CLIENT_ID),
+            { body: commands },
+        );
+
         if (process.env.GUILD_ID && process.env.GUILD_ID !== 'YOUR_GUILD_ID') {
             console.log(`Targeting specific Guild ID: ${process.env.GUILD_ID}`);
-            data = await rest.put(
+            await rest.put(
                 Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
-                { body: commands },
-            );
-        } else {
-            console.log('Deploying globally (can take up to 1 hour to sync)...');
-            data = await rest.put(
-                Routes.applicationCommands(process.env.CLIENT_ID),
                 { body: commands },
             );
         }
