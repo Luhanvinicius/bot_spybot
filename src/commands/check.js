@@ -42,6 +42,8 @@ module.exports = {
             let opponentPointsGained = 0;
             let opponentNameStr = alliance.OpponentAllianceId || activeWar.opponent_name;
             
+            // Identify if it is an active war from both sides
+            let isMutualWar = false;
             if (opponentNameStr && opponentNameStr !== 'Unknown') {
                 const opponent = await api.getAlliance(opponentNameStr);
                 if (opponent) {
@@ -49,12 +51,22 @@ module.exports = {
                     const currentOpponentPoints = opponent.WarPoints || 0;
                     opponentPointsGained = Math.max(0, currentOpponentPoints - startOpponentPoints);
                     opponentNameStr = opponent.Name; // Use nicer name
+                    
+                    if (opponent.InWar && opponent.OpponentAllianceId && opponent.OpponentAllianceId.toLowerCase() === alliance.Name.toLowerCase()) {
+                        isMutualWar = true;
+                    }
                 }
             }
         
-            // Calculate time left (7 days duration)
+            // Calculate time left
+            // 3 days if both alliances fight back (points > 0), 14 hours otherwise
+            let durationMs = 14 * 60 * 60 * 1000;
+            if (alliancePointsGained > 0 && opponentPointsGained > 0) {
+                durationMs = 3 * 24 * 60 * 60 * 1000;
+            }
+                
             const startDate = new Date(activeWar.start_date);
-            const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const endDate = new Date(startDate.getTime() + durationMs);
             const now = new Date();
             const timeLeftMs = Math.max(0, endDate - now);
             
