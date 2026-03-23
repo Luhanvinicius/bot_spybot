@@ -33,7 +33,15 @@ class Monitor {
                         if (opponent) opponentPoints = opponent.WarPoints || 0;
                     }
                     
-                    await db.addActiveWar(alliance.Id, alliance.OpponentAllianceId || 'Unknown', alliance.WarPoints || 0, opponentPoints);
+                    // Collect starting points for members
+                    const membersStartData = {};
+                    if (alliance.Members) {
+                        for (const member of alliance.Members) {
+                            membersStartData[member.Name] = member.TotalWarPoints || 0;
+                        }
+                    }
+
+                    await db.addActiveWar(alliance.Id, alliance.OpponentAllianceId || 'Unknown', alliance.WarPoints || 0, opponentPoints, membersStartData);
                     this.notifyWarStart(shield.name, alliance);
                 } else if (!inWar && activeWar) {
                     // War ended

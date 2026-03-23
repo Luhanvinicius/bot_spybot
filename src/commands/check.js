@@ -73,16 +73,42 @@ module.exports = {
             const days = Math.floor(timeLeftMs / (1000 * 60 * 60 * 24));
             const hours = Math.floor((timeLeftMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
+
+            // Calculate Reconstruction Time
+            const memberCount = alliance.Members ? alliance.Members.length : 0;
+            let reconHours = 3;
+            if (memberCount > 10 && memberCount <= 20) reconHours = 4;
+            else if (memberCount > 20 && memberCount <= 30) reconHours = 5;
+            else if (memberCount > 30) reconHours = 6;
+
+            // Calculate Top Score Individuals
+            const membersStart = activeWar.members_start_data || {};
+            let topAttackers = [];
+            if (alliance.Members) {
+                for (const m of alliance.Members) {
+                    const startP = membersStart[m.Name] !== undefined ? membersStart[m.Name] : m.TotalWarPoints;
+                    const diff = Math.max(0, m.TotalWarPoints - startP);
+                    if (diff > 0) topAttackers.push({ name: m.Name, points: diff });
+                }
+            }
+            topAttackers.sort((a,b) => b.points - a.points);
+            const top5 = topAttackers.slice(0, 5);
+            let topStr = '*Nadie ha puntuado aún.*';
+            if (top5.length > 0) {
+                topStr = top5.map((t, idx) => `**${idx+1}.** ${t.name}: ${t.points.toLocaleString()}`).join('\n');
+            }
         
             embed.setDescription(`**${alliance.Name}** vs **${opponentNameStr}**`)
             embed.addFields(
                 { name: 'Puntos ganados:', value: `**${alliance.Name}**: ${alliancePointsGained.toLocaleString()}\n**${opponentNameStr}**: ${opponentPointsGained.toLocaleString()}`, inline: false },
-                { name: 'Tiempo restante:', value: `${days}d ${hours}h ${minutes}m`, inline: false }
+                { name: 'Tiempo restante:', value: `${days}d ${hours}h ${minutes}m`, inline: true },
+                { name: '🛠️ Tiempo de Reconstrucción:', value: `${reconHours} horas (Basado en ${memberCount} miembros)`, inline: true },
+                { name: '🏆 Top Jugadores (Guerra Actual)', value: topStr, inline: false }
             );
         } else {
             // Fallback if not tracked yet
             if (alliance.WarPoints) {
-                embed.addFields({ name: '📈 War Points actuales', value: `${alliance.WarPoints.toLocaleString()}`, inline: true });
+                embed.addFields({ name: '📈 War Points actuales (Totales Históricos)', value: `${alliance.WarPoints.toLocaleString()}\n\n*(Esta guerra comenzó antes de que el bot la registrara. No se pueden calcular los puntos específicos de esta guerra ni el tiempo exacto).*`, inline: false });
             }
         }
 

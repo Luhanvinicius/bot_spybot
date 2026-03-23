@@ -74,6 +74,13 @@ const init = async () => {
             start_points_opponent BIGINT,
             start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
+
+        try {
+            await run('ALTER TABLE active_wars ADD COLUMN IF NOT EXISTS members_start_data JSONB DEFAULT \'{}\'::jsonb');
+        } catch (e) {
+            console.log('Column members_start_data already exists or error:', e.message);
+        }
+
         console.log('✅ PostgreSQL Database Initialized');
     } catch (error) {
         console.error('❌ Error initializing database:', error);
@@ -90,6 +97,10 @@ const db = {
 
     async addShieldAlliance(name, guildId) {
         return run('INSERT INTO alliances_to_shield (name, guild_id) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET guild_id = $2', [name, guildId]);
+    },
+
+    async removeShieldAlliance(name) {
+        return run('DELETE FROM alliances_to_shield WHERE name = $1', [name]);
     },
 
     async getShieldAlliances() {
@@ -126,8 +137,9 @@ const db = {
         return run('DELETE FROM player_coords WHERE player_name = $1', [player]);
     },
 
-    async addActiveWar(alliance, opponent, startPointsAlliance, startPointsOpponent) {
-        return run('INSERT INTO active_wars (alliance_name, opponent_name, start_points_alliance, start_points_opponent) VALUES ($1, $2, $3, $4) ON CONFLICT (alliance_name) DO UPDATE SET start_points_alliance = $3, start_points_opponent = $4, opponent_name = $2, start_date = CURRENT_TIMESTAMP', [alliance, opponent, startPointsAlliance, startPointsOpponent]);
+    async addActiveWar(alliance, opponent, startPointsAlliance, startPointsOpponent, membersStartData = {}) {
+        const jsonStr = JSON.stringify(membersStartData);
+        return run('INSERT INTO active_wars (alliance_name, opponent_name, start_points_alliance, start_points_opponent, members_start_data) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (alliance_name) DO UPDATE SET start_points_alliance = $3, start_points_opponent = $4, opponent_name = $2, members_start_data = $5, start_date = CURRENT_TIMESTAMP', [alliance, opponent, startPointsAlliance, startPointsOpponent, jsonStr]);
     },
 
     async getActiveWar(alliance) {

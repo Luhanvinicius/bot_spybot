@@ -1,0 +1,34 @@
+[dotenv@17.3.1] injecting env (8) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[dotenv@17.3.1] injecting env (0) from .env -- tip: 🛡️ auth for agents: https://vestauth.com
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+Started refreshing 17 application (/) commands.
+Targeting specific Guild ID: 1438243385143070723
+Database command error: error: autentica��o do tipo senha falhou para o usu�rio "root"
+    at C:\Users\luhan\OneDrive\Desktop\galaxy\spy-bot\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async run (C:\Users\luhan\OneDrive\Desktop\galaxy\spy-bot\src\database\db.js:26:21)
+    at async init (C:\Users\luhan\OneDrive\Desktop\galaxy\spy-bot\src\database\db.js:37:9)
+❌ Error initializing database: error: autentica��o do tipo senha falhou para o usu�rio "root"
+    at C:\Users\luhan\OneDrive\Desktop\galaxy\spy-bot\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async run (C:\Users\luhan\OneDrive\Desktop\galaxy\spy-bot\src\database\db.js:26:21)
+    at async init (C:\Users\luhan\OneDrive\Desktop\galaxy\spy-bot\src\database\db.js:37:9) {
+  length: 109,
+  severity: 'FATAL',
+  code: '28P01',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'auth.c',
+  line: '320',
+  routine: 'auth_failed'
+}
+Successfully reloaded 17 application (/) commands.

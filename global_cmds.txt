@@ -1,0 +1,20 @@
+[dotenv@17.3.1] injecting env (8) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+[
+  'add_player_coords',
+  'añadir_alianza_escudos',
+  'alianza',
+  'check',
+  'delete_player_coords',
+  'get_alliance_coords',
+  'get_player_coords',
+  'mains',
+  'matchmaking',
+  'maxfarm',
+  'player_history',
+  'refresh',
+  'show_shield_alliances',
+  'war_history',
+  'spybot',
+  'info_jugador',
+  'ranking'
+]
