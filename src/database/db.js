@@ -75,6 +75,11 @@ const init = async () => {
             start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
 
+        await run(`CREATE TABLE IF NOT EXISTS allowed_channels (
+            id SERIAL PRIMARY KEY,
+            channel_id VARCHAR(50) UNIQUE NOT NULL
+        )`);
+
         try {
             await run('ALTER TABLE active_wars ADD COLUMN IF NOT EXISTS members_start_data JSONB DEFAULT \'{}\'::jsonb');
         } catch (e) {
@@ -149,6 +154,19 @@ const db = {
 
     async removeActiveWar(alliance) {
         return run('DELETE FROM active_wars WHERE alliance_name = $1', [alliance]);
+    },
+
+    async addAllowedChannel(channelId) {
+        return run('INSERT INTO allowed_channels (channel_id) VALUES ($1) ON CONFLICT (channel_id) DO NOTHING', [channelId]);
+    },
+
+    async removeAllowedChannel(channelId) {
+        return run('DELETE FROM allowed_channels WHERE channel_id = $1', [channelId]);
+    },
+
+    async getAllowedChannels() {
+        const rows = await query('SELECT channel_id FROM allowed_channels', []);
+        return rows.map(r => r.channel_id);
     }
 };
 

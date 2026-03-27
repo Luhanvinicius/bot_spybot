@@ -1,16 +1,23 @@
-const { Events } = require('discord.js');
+const { Events, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
     name: Events.InteractionCreate,
     async execute(interaction) {
         if (!interaction.isChatInputCommand()) return;
 
-        const allowedChannels = ['1481853111520985101', '1483714865863593984'];
+        const db = require('../database/db');
+        const dbChannels = await db.getAllowedChannels();
+        const fallbackAllowed = ['1481853111520985101', '1483714865863593984'];
+        const allAllowed = [...dbChannels, ...fallbackAllowed];
 
         // Restriction: Only respond in specific channel IDs
-        if (!allowedChannels.includes(interaction.channelId)) {
+        // EXCEPTION: The command is 'gestionar_canales' OR the user is an Administrator
+        const isControlCommand = interaction.commandName === 'gestionar_canales';
+        const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
+
+        if (!isControlCommand && !isAdmin && !allAllowed.includes(interaction.channelId)) {
             return interaction.reply({ 
-                content: '❌ Este bot solo se puede usar en los canales autorizados.', 
+                content: '❌ Este bot no se pode usar aqui. Requer permiso dinâmico via `/gestionar_canales`.', 
                 ephemeral: true 
             });
         }
