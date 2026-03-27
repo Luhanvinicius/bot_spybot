@@ -74,12 +74,33 @@ module.exports = {
             const hours = Math.floor((timeLeftMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
 
-            // Calculate Reconstruction Time
-            const memberCount = alliance.Members ? alliance.Members.length : 0;
-            let reconHours = 3;
-            if (memberCount > 10 && memberCount <= 20) reconHours = 4;
-            else if (memberCount > 20 && memberCount <= 30) reconHours = 5;
-            else if (memberCount > 30) reconHours = 6;
+            // Calculate Reconstruction Time (New Logic based on member difference)
+            let reconHoursA = 3;
+            let reconHoursB = 3;
+            const mA = alliance.Members ? alliance.Members.length : 0;
+            let mB = 0;
+
+            // We need the opponent's ACTUAL member count from the API
+            const opponentData = (opponentNameStr && opponentNameStr !== 'Unknown') ? await api.getAlliance(opponentNameStr) : null;
+            if (opponentData && opponentData.Members) {
+                mB = opponentData.Members.length;
+                const diff = Math.abs(mA - mB);
+                
+                if (mA > mB) {
+                    if (diff >= 1 && diff <= 10) reconHoursA = 4;
+                    else if (diff >= 11 && diff <= 20) reconHoursA = 5;
+                    else if (diff > 20) reconHoursA = 6;
+                    reconHoursB = 3;
+                } else if (mB > mA) {
+                    if (diff >= 1 && diff <= 10) reconHoursB = 4;
+                    else if (diff >= 11 && diff <= 20) reconHoursB = 5;
+                    else if (diff > 20) reconHoursB = 6;
+                    reconHoursA = 3;
+                }
+            }
+
+            const reconStrA = reconHoursA === 5 || reconHoursA === 6 ? `${reconHoursA-1}-${reconHoursA}h` : `${reconHoursA}h`;
+            const reconStrB = reconHoursB === 5 || reconHoursB === 6 ? `${reconHoursB-1}-${reconHoursB}h` : `${reconHoursB}h`;
 
             // Calculate Top Score Individuals
             const membersStart = activeWar.members_start_data || {};
@@ -101,8 +122,8 @@ module.exports = {
             embed.setDescription(`**${alliance.Name}** vs **${opponentNameStr}**`)
             embed.addFields(
                 { name: 'Puntos ganados:', value: `**${alliance.Name}**: ${alliancePointsGained.toLocaleString()}\n**${opponentNameStr}**: ${opponentPointsGained.toLocaleString()}`, inline: false },
-                { name: 'Tiempo restante:', value: `${days}d ${hours}h ${minutes}m`, inline: true },
-                { name: '🛠️ Tiempo de Reconstrucción:', value: `${reconHours} horas (Basado en ${memberCount} miembros)`, inline: true },
+                { name: '🛠️ Reconstrucción:', value: `**${alliance.Name}**: ${reconStrA}\n**${opponentNameStr}**: ${reconStrB}`, inline: true },
+                { name: '🕒 Tiempo restante:', value: `${days}d ${hours}h ${minutes}m`, inline: true },
                 { name: '🏆 Top Jugadores (Guerra Actual)', value: topStr, inline: false }
             );
         } else {
